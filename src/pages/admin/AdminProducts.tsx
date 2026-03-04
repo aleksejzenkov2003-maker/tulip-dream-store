@@ -115,7 +115,7 @@ const AdminProducts = () => {
           <DialogTrigger asChild>
             <Button className="rounded-full"><Plus className="h-4 w-4 mr-1" /> Добавить</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md rounded-2xl">
+          <DialogContent className="max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editingId ? 'Редактировать' : 'Новый товар'}</DialogTitle>
             </DialogHeader>
