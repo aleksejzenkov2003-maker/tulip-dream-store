@@ -37,7 +37,7 @@ const Index = () => {
               <div className="flex gap-4 flex-wrap">
                 <Button asChild size="lg" className="rounded-full text-base px-8">
                   <Link to="/catalog">
-                    Смотреть каталог <ArrowRight className="ml-2 h-4 w-4" />
+                    <Search className="mr-2 h-4 w-4" /> Смотреть каталог <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
