@@ -1,19 +1,39 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, Moon, Sun } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const totalItems = useCart((s) => s.totalItems());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') setDark(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="font-display text-2xl font-bold text-primary">
-          🌷 Тюльпаны
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setDark(!dark)}
+            className="p-2 rounded-full hover:bg-muted transition-colors"
+            aria-label="Переключить тему"
+          >
+            {dark ? <Sun className="h-5 w-5 text-foreground" /> : <Moon className="h-5 w-5 text-foreground" />}
+          </button>
+          <Link to="/" className="font-display text-2xl font-bold text-primary">
+            🌷 Тюльпаны
+          </Link>
+        </div>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
