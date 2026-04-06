@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
-import { ArrowRight, Truck, Flower2, Heart } from "lucide-react";
+import { ArrowRight, Truck, Flower2, Heart, Search } from "lucide-react";
 
 const Index = () => {
   const { data: products } = useQuery({
