@@ -1,20 +1,16 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import ProductCard from '@/components/ProductCard';
-import { ArrowRight, Truck, Flower2, Heart } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import ProductCard from "@/components/ProductCard";
+import { ArrowRight, Truck, Flower2, Heart } from "lucide-react";
 
 const Index = () => {
   const { data: products } = useQuery({
-    queryKey: ['products-featured'],
+    queryKey: ["products-featured"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('in_stock', true)
-        .limit(6);
+      const { data, error } = await supabase.from("products").select("*").eq("in_stock", true).limit(6);
       if (error) throw error;
       return data;
     },
@@ -26,11 +22,7 @@ const Index = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-tulip-cream via-tulip-peach to-tulip-rose min-h-[80vh] flex items-center">
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-2xl">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
               <span className="font-body text-sm font-semibold text-primary uppercase tracking-widest">
                 Доставка по Москве
               </span>
@@ -44,7 +36,9 @@ const Index = () => {
               </p>
               <div className="flex gap-4 flex-wrap">
                 <Button asChild size="lg" className="rounded-full text-base px-8">
-                  <Link to="/catalog">Смотреть каталог <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                  <Link to="/catalog">
+                    Смотреть каталог <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
             </motion.div>
@@ -53,7 +47,7 @@ const Index = () => {
         <motion.div
           className="absolute right-0 bottom-0 text-[200px] leading-none opacity-20 select-none pointer-events-none hidden lg:block"
           animate={{ y: [0, -15, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         >
           🌷
         </motion.div>
@@ -71,9 +65,17 @@ const Index = () => {
         </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: Flower2, title: 'Свежесть', desc: 'Тюльпаны напрямую из Голландии, хранятся в специальных холодильниках' },
-            { icon: Truck, title: 'Быстрая доставка', desc: 'Доставим букет в течение 2 часов по Москве в пределах МКАД' },
-            { icon: Heart, title: 'С любовью', desc: 'Каждый букет собирается вручную нашими флористами' },
+            {
+              icon: Flower2,
+              title: "Свежесть",
+              desc: "Тюльпаны напрямую из Голландии, хранятся в специальных холодильниках",
+            },
+            {
+              icon: Truck,
+              title: "Быстрая доставка",
+              desc: "Доставим букет в течение 2 часов по Москве в пределах МКАД",
+            },
+            { icon: Heart, title: "С любовью", desc: "Каждый букет собирается вручную нашими флористами" },
           ].map((item, i) => (
             <motion.div
               key={i}
