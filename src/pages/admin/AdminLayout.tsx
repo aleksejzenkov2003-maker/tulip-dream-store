@@ -43,6 +43,7 @@ const AdminLayout = () => {
     { to: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
     { to: '/admin/orders', label: 'Заявки', icon: ClipboardList },
     { to: '/admin/products', label: 'Товары', icon: Package },
+    { to: '/admin/chats', label: 'Чаты', icon: MessageCircle },
   ];
 
   return (
