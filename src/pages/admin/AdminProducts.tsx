@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Upload, Search, ImagePlus } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 const CATEGORIES = ['букеты', 'штучные', 'композиции'];
@@ -31,6 +32,11 @@ const AdminProducts = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products'],
@@ -51,7 +57,6 @@ const AdminProducts = () => {
         in_stock: form.in_stock,
         photo_url: form.photo_url || null,
       };
-
       if (editingId) {
         const { error } = await supabase.from('products').update(payload).eq('id', editingId);
         if (error) throw error;
@@ -78,7 +83,19 @@ const AdminProducts = () => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-products'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
       toast({ title: 'Товар удалён' });
+    },
+  });
+
+  const toggleStock = useMutation({
+    mutationFn: async ({ id, in_stock }: { id: string; in_stock: boolean }) => {
+      const { error } = await supabase.from('products').update({ in_stock }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-products'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
     },
   });
 
@@ -88,9 +105,7 @@ const AdminProducts = () => {
     setDialogOpen(true);
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFile = useCallback(async (file: File) => {
     setUploading(true);
     try {
       const ext = file.name.split('.').pop();
@@ -105,7 +120,22 @@ const AdminProducts = () => {
     } finally {
       setUploading(false);
     }
-  };
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) uploadFile(file);
+  }, [uploadFile]);
+
+  const filtered = products?.filter((p) => {
+    if (catFilter !== 'all' && p.category !== catFilter) return false;
+    if (stockFilter === 'in' && !p.in_stock) return false;
+    if (stockFilter === 'out' && p.in_stock) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   return (
     <div>
@@ -145,16 +175,26 @@ const AdminProducts = () => {
               </div>
               <div>
                 <Label>Фото</Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} className="rounded-xl" placeholder="URL или загрузите" />
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                    <Button type="button" variant="outline" size="icon" className="rounded-xl" asChild disabled={uploading}>
-                      <span>{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}</span>
-                    </Button>
-                  </label>
+                <div
+                  className={`mt-1 border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer ${dragOver ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
+                  {uploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                  ) : form.photo_url ? (
+                    <img src={form.photo_url} alt="" className="h-32 mx-auto rounded-xl object-cover" />
+                  ) : (
+                    <div className="text-muted-foreground">
+                      <ImagePlus className="h-8 w-8 mx-auto mb-2" />
+                      <p className="text-sm">Перетащите фото или нажмите для загрузки</p>
+                    </div>
+                  )}
                 </div>
-                {form.photo_url && <img src={form.photo_url} alt="" className="mt-2 h-24 rounded-xl object-cover" />}
+                <Input value={form.photo_url} onChange={(e) => setForm({ ...form, photo_url: e.target.value })} className="rounded-xl mt-2" placeholder="Или вставьте URL" />
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.in_stock} onCheckedChange={(v) => setForm({ ...form, in_stock: v })} />
@@ -169,29 +209,70 @@ const AdminProducts = () => {
         </Dialog>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Поиск по названию" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 rounded-full" />
+        </div>
+        <Select value={catFilter} onValueChange={setCatFilter}>
+          <SelectTrigger className="w-full sm:w-[150px] rounded-full"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все категории</SelectItem>
+            {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={stockFilter} onValueChange={setStockFilter}>
+          <SelectTrigger className="w-full sm:w-[150px] rounded-full"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все</SelectItem>
+            <SelectItem value="in">В наличии</SelectItem>
+            <SelectItem value="out">Нет в наличии</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {isLoading ? (
         <div className="text-center py-10 animate-pulse font-body">Загрузка...</div>
-      ) : products && products.length > 0 ? (
+      ) : filtered && filtered.length > 0 ? (
         <div className="grid gap-4">
-          {products.map((p) => (
-            <div key={p.id} className="flex items-center gap-4 bg-card rounded-2xl p-4 shadow-sm">
-              <div className="h-16 w-16 rounded-xl overflow-hidden bg-tulip-cream flex-shrink-0">
+          {filtered.map((p) => (
+            <div key={p.id} className="flex items-center gap-4 bg-card rounded-2xl p-4 shadow-sm border border-border">
+              <div className="h-20 w-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                 {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">🌷</div>}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-display font-semibold truncate">{p.name}</h3>
-                <p className="font-body text-xs text-muted-foreground">{p.category} · {p.in_stock ? 'В наличии' : 'Нет'}</p>
+                <p className="font-body text-xs text-muted-foreground">{p.category}</p>
               </div>
-              <span className="font-display font-bold text-primary">{p.price} ₽</span>
+              <span className="font-display font-bold text-primary whitespace-nowrap">{p.price} ₽</span>
+              <div className="flex items-center gap-1">
+                <Switch checked={p.in_stock} onCheckedChange={(v) => toggleStock.mutate({ id: p.id, in_stock: v })} />
+              </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(p.id)}><Trash2 className="h-4 w-4" /></Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-2xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Удалить товар «{p.name}»?</AlertDialogTitle>
+                      <AlertDialogDescription>Это действие нельзя отменить.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-full">Отмена</AlertDialogCancel>
+                      <AlertDialogAction className="rounded-full" onClick={() => deleteMutation.mutate(p.id)}>Удалить</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="font-body text-muted-foreground text-center py-10">Товаров пока нет. Добавьте первый!</p>
+        <p className="font-body text-muted-foreground text-center py-10">
+          {search || catFilter !== 'all' || stockFilter !== 'all' ? 'Ничего не найдено' : 'Товаров пока нет. Добавьте первый!'}
+        </p>
       )}
     </div>
   );

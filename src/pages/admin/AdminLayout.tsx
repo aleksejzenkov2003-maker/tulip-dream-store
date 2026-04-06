@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Package, ClipboardList, LogOut } from 'lucide-react';
+import { Package, ClipboardList, LogOut, LayoutDashboard } from 'lucide-react';
 
 const AdminLayout = () => {
   const [loading, setLoading] = useState(true);
@@ -40,6 +40,7 @@ const AdminLayout = () => {
   if (!authorized) return null;
 
   const navItems = [
+    { to: '/admin/dashboard', label: 'Дашборд', icon: LayoutDashboard },
     { to: '/admin/orders', label: 'Заявки', icon: ClipboardList },
     { to: '/admin/products', label: 'Товары', icon: Package },
   ];
