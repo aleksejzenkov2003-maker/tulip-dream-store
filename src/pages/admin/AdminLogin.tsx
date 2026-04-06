@@ -30,7 +30,7 @@ const AdminLogin = () => {
         throw new Error('У вас нет доступа к админке');
       }
 
-      navigate('/admin/orders');
+      navigate('/admin/dashboard');
     } catch (err: any) {
       toast({ title: 'Ошибка входа', description: err.message, variant: 'destructive' });
     } finally {
