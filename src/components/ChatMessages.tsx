@@ -58,9 +58,6 @@ const ChatMessages = ({ sessionId }: Props) => {
     const text = input.trim();
     if (!text || loading) return;
 
-    // Optimistic UI
-    const tempMsg: Message = { id: crypto.randomUUID(), role: 'user', content: text, created_at: new Date().toISOString() };
-    setMessages(prev => [...prev, tempMsg]);
     setInput('');
     setLoading(true);
 
@@ -79,7 +76,6 @@ const ChatMessages = ({ sessionId }: Props) => {
         throw new Error(err.error || 'Ошибка');
       }
 
-      // Response will come via realtime, but also parse it
       const data = await resp.json();
       if (data.order_created) {
         toast({ title: '🎉 Заказ оформлен!', description: 'Менеджер свяжется с вами для подтверждения' });
