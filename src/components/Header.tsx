@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, Moon, Sun } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
